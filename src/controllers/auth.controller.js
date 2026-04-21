@@ -86,3 +86,31 @@ export const login = async (req, res) => {
         res.status(500).json({message: "Error occurred while logging in"});
     }
 }
+
+export const getMe = async (req, res) => {
+    const Token = req.headers.authorization?.split(" ")[1];
+
+    if(!Token){
+        return res.status(401).json({message: "Unauthorized"});
+    }
+
+    try{
+        const decoded = jwt.verify(Token, config.JWT_SECRET);
+        const user = await userModel.findById(decoded.userId);
+
+        if(!user){
+            return res.status(404).json({message: "User not found"});
+        }
+
+        return res.status(200).json({
+            message: "User fetched successfully",
+            user: {
+                username: user.username,
+                email: user.email,
+                verified: user.verified
+            }
+        })
+    }catch (error) {
+        return res.status(401).json({message: "Invalid token"});
+    }
+}
