@@ -2,6 +2,8 @@ import express from 'express';
 import mongoose from 'mongoose';
 import userModel from '../models/user.model.js';
 import { config } from 'dotenv';
+import crypto from "crypto";
+import jwt from "jsonwebtoken";
 
 export const register = async (req, res) => {
 
@@ -113,4 +115,45 @@ export const getMe = async (req, res) => {
     }catch (error) {
         return res.status(401).json({message: "Invalid token"});
     }
+}
+
+export const refreshToken = async (req, res) => {
+
+    const refreshToken = req.cookies.refreshToken;
+
+    if(!refreshToken){
+        return res.status(401).json({message: "Unauthorized"});
+    }
+
+    try {
+        const decoded = jwt.verify(refreshToken, config.JWT_SECRET);
+        
+        const refreshTokenHash = crypto.createHash("sha256").update(refreshToken).digest("hex");
+
+        const accessToken = jwt.sign({
+            userId: decoded.userId
+        }, config.JWT_SECRET, {
+            expiresIn: "15m"
+        })
+
+        const newRefreshToken = jwt.sign({
+            userId: decoded.userId
+        }, config.JWT_SECRET, {
+            expiresIn: "7d"
+        })
+
+        res.cookies("refreshToken", newRefreshToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "strict",
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        })
+
+        return res.status(200).json({message: "Token refreshed successfully", accessToken});
+
+        
+    } catch (error) {
+        return res.status(401).json({message: "Invalid refresh token"});
+    }
+
 }
