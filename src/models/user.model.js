@@ -30,7 +30,7 @@ userSchema.pre("save", async function(next){ // this refers to the password hash
     
     const hash = await bcrypt.hash(this.password, 10);
     this.password = hash;
-    return next();
+    return;
 })
 
 userSchema.methods.comparePassword = async function(password){  // this refers to the user instance, we use comparePassword method to compare the password entered by the user with the hashed password stored in the database

@@ -4,6 +4,7 @@ import userModel from '../models/user.model.js';
 import { config } from 'dotenv';
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
+import {sendRegistrationEmail} from "../services/email.service.js"; 
 
 export const register = async (req, res) => {
 
@@ -33,6 +34,8 @@ export const register = async (req, res) => {
                 verified: newUser.verified
             }
         });
+
+        await emailService.sendRegistrationEmail(newUser.email, newUser.username);
 
     } catch (error) {
         return res.status(500).json({message: "Error occurred while registering user"});
